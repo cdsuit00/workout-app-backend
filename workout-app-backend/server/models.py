@@ -1,9 +1,8 @@
-from flask_sqlalchemy import SQLAlchemy
+from .extensions import db
 from datetime import datetime
 from sqlalchemy.orm import validates
-import re
 
-db = SQLAlchemy()
+# Remove the local db = SQLAlchemy() line and use the shared instance
 
 class BaseModel(db.Model):
     __abstract__ = True
@@ -73,20 +72,19 @@ class Workout(BaseModel):
     
     # Validations
     @validates('date')
-    def validate_date(self, key, date):
-        if not date:
+    def validate_date(self, key, workout_date):  # Fixed parameter name
+        if not workout_date:
             raise ValueError("Workout date is required")
-        if isinstance(date, str):
+        if isinstance(workout_date, str):
             # Try to convert string to date if needed
-            from datetime import datetime
             try:
-                date = datetime.strptime(date, '%Y-%m-%d').date()
+                workout_date = datetime.strptime(workout_date, '%Y-%m-%d').date()
             except ValueError:
                 raise ValueError("Date must be in YYYY-MM-DD format")
         
-        if date > datetime.utcnow().date():
+        if workout_date > datetime.utcnow().date():
             raise ValueError("Workout date cannot be in the future")
-        return date
+        return workout_date
     
     @validates('duration_minutes')
     def validate_duration(self, key, duration):
@@ -104,7 +102,7 @@ class Workout(BaseModel):
     
     def __repr__(self):
         return f'<Workout {self.date} ({self.duration_minutes} minutes)>'
-    
+
 ### Start of WorkoutExercise model ###
 
 class WorkoutExercise(BaseModel):

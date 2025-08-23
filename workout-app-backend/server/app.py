@@ -1,10 +1,5 @@
 from flask import Flask
-from flask_migrate import Migrate
-from flask_sqlalchemy import SQLAlchemy
-
-# Initialize extensions
-db = SQLAlchemy()
-migrate = Migrate()
+from .extensions import db, migrate
 
 def create_app():
     app = Flask(__name__)
@@ -19,12 +14,8 @@ def create_app():
     migrate.init_app(app, db)
     
     # Import models to ensure they're registered with SQLAlchemy
-    # We'll import specific models as we create them
-    try:
-        from models import BaseModel
-        print("Models imported successfully")
-    except ImportError as e:
-        print(f"Model import error: {e}")
+    from . import models
+    print("Models imported successfully")
     
     return app
 
