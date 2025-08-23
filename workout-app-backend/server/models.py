@@ -104,3 +104,57 @@ class Workout(BaseModel):
     
     def __repr__(self):
         return f'<Workout {self.date} ({self.duration_minutes} minutes)>'
+    
+### Start of WorkoutExercise model ###
+
+class WorkoutExercise(BaseModel):
+    __tablename__ = 'workout_exercises'
+    
+    workout_id = db.Column(db.Integer, db.ForeignKey('workouts.id'), nullable=False)
+    exercise_id = db.Column(db.Integer, db.ForeignKey('exercises.id'), nullable=False)
+    reps = db.Column(db.Integer)
+    sets = db.Column(db.Integer)
+    duration_seconds = db.Column(db.Integer)
+    
+    # Table constraints
+    __table_args__ = (
+        db.CheckConstraint('reps IS NULL OR reps > 0', name='check_positive_reps'),
+        db.CheckConstraint('sets IS NULL OR sets > 0', name='check_positive_sets'),
+        db.CheckConstraint('duration_seconds IS NULL OR duration_seconds > 0', name='check_positive_duration'),
+        db.CheckConstraint(
+            '(reps IS NOT NULL AND sets IS NOT NULL) OR duration_seconds IS NOT NULL',
+            name='check_has_reps_sets_or_duration'
+        ),
+        db.UniqueConstraint('workout_id', 'exercise_id', name='unique_workout_exercise')
+    )
+    
+    # Validations
+    @validates('reps')
+    def validate_reps(self, key, reps):
+        if reps is not None:
+            if not isinstance(reps, int) or reps <= 0:
+                raise ValueError("Reps must be a positive integer if provided")
+            if reps > 1000:
+                raise ValueError("Reps cannot exceed 1000")
+        return reps
+    
+    @validates('sets')
+    def validate_sets(self, key, sets):
+        if sets is not None:
+            if not isinstance(sets, int) or sets <= 0:
+                raise ValueError("Sets must be a positive integer if provided")
+            if sets > 100:
+                raise ValueError("Sets cannot exceed 100")
+        return sets
+    
+    @validates('duration_seconds')
+    def validate_duration_seconds(self, key, duration):
+        if duration is not None:
+            if not isinstance(duration, int) or duration <= 0:
+                raise ValueError("Duration must be a positive integer if provided")
+            if duration > 36000:  # 10 hours max
+                raise ValueError("Duration cannot exceed 36000 seconds (10 hours)")
+        return duration
+    
+    def __repr__(self):
+        return f'<WorkoutExercise Workout:{self.workout_id} Exercise:{self.exercise_id}>'
