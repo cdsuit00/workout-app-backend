@@ -63,6 +63,12 @@ class Exercise(BaseModel):
             raise ValueError("Exercise name cannot be empty")
         if len(name) > 100:
             raise ValueError("Exercise name cannot exceed 100 characters")
+        
+        # Check for uniqueness (excluding current instance if updating)
+        existing = Exercise.query.filter(Exercise.name.ilike(name), Exercise.id != self.id).first()
+        if existing:
+            raise ValueError("Exercise with this name already exists")
+        
         return name.strip()
     
     @validates('category')
@@ -129,9 +135,11 @@ class Workout(BaseModel):
     
     @validates('duration_minutes')
     def validate_duration(self, key, duration):
-        if not isinstance(duration, int) or duration <= 0:
-            raise ValueError("Duration must be a positive integer")
-        if duration > 360:  # 6 hours max
+        if not isinstance(duration, int):
+            raise ValueError("Duration must be an integer")
+        if duration <= 0:
+            raise ValueError("Duration must be greater than 0")
+        if duration > 360:
             raise ValueError("Duration cannot exceed 360 minutes (6 hours)")
         return duration
     
