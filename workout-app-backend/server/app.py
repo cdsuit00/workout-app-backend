@@ -1,5 +1,5 @@
-from flask import Flask
-from .extensions import db, migrate
+from flask import Flask, jsonify
+from extensions import db, migrate  # Remove the relative import dot
 
 def create_app():
     app = Flask(__name__)
@@ -14,8 +14,20 @@ def create_app():
     migrate.init_app(app, db)
     
     # Import models to ensure they're registered with SQLAlchemy
-    from . import models
+    import models  # Remove relative import
     print("Models imported successfully")
+    
+    # Register blueprints
+    from routes.workouts import workout_bp  # Remove relative import
+    from routes.exercises import exercise_bp  # Remove relative import
+    
+    app.register_blueprint(workout_bp, url_prefix='/workouts')
+    app.register_blueprint(exercise_bp, url_prefix='/exercises')
+    
+    # Health check endpoint
+    @app.route('/')
+    def health_check():
+        return jsonify({"message": "Workout App API is running!"})
     
     return app
 

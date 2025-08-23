@@ -2,16 +2,14 @@
 
 import sys
 import os
-from datetime import datetime, date as date_type  # Rename the import to avoid conflict
+from datetime import datetime, date as date_type
 
-# Add the parent directory to Python path to allow imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
-sys.path.insert(0, os.path.dirname(__file__))
+# Add the current directory to Python path
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from server.app import create_app
-from server.extensions import db
-from server.models import Exercise, Workout, WorkoutExercise
-
+from app import create_app  # Now this should work
+from extensions import db  # Remove relative import
+from models import Exercise, Workout, WorkoutExercise  # Remove relative import
 def seed_database():
     app = create_app()
     
