@@ -28,6 +28,8 @@ class BaseModel(db.Model):
     def get_by_id(cls, id):
         return cls.query.get_or_404(id)
 
+### Start of Exercise model ###
+
 class Exercise(BaseModel):
     __tablename__ = 'exercises'
     
@@ -56,3 +58,49 @@ class Exercise(BaseModel):
     
     def __repr__(self):
         return f'<Exercise {self.name} ({self.category})>'
+    
+### Start of Workout model ###
+
+class Workout(BaseModel):
+    __tablename__ = 'workouts'
+    
+    date = db.Column(db.Date, nullable=False)
+    duration_minutes = db.Column(db.Integer, nullable=False)
+    notes = db.Column(db.Text)
+    
+    # Relationships
+    workout_exercises = db.relationship('WorkoutExercise', backref='workout', cascade='all, delete-orphan')
+    
+    # Validations
+    @validates('date')
+    def validate_date(self, key, date):
+        if not date:
+            raise ValueError("Workout date is required")
+        if isinstance(date, str):
+            # Try to convert string to date if needed
+            from datetime import datetime
+            try:
+                date = datetime.strptime(date, '%Y-%m-%d').date()
+            except ValueError:
+                raise ValueError("Date must be in YYYY-MM-DD format")
+        
+        if date > datetime.utcnow().date():
+            raise ValueError("Workout date cannot be in the future")
+        return date
+    
+    @validates('duration_minutes')
+    def validate_duration(self, key, duration):
+        if not isinstance(duration, int) or duration <= 0:
+            raise ValueError("Duration must be a positive integer")
+        if duration > 360:  # 6 hours max
+            raise ValueError("Duration cannot exceed 360 minutes (6 hours)")
+        return duration
+    
+    @validates('notes')
+    def validate_notes(self, key, notes):
+        if notes and len(notes) > 1000:
+            raise ValueError("Notes cannot exceed 1000 characters")
+        return notes
+    
+    def __repr__(self):
+        return f'<Workout {self.date} ({self.duration_minutes} minutes)>'
