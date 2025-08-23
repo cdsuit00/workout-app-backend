@@ -35,9 +35,26 @@ class Exercise(BaseModel):
     name = db.Column(db.String(100), nullable=False, unique=True)
     category = db.Column(db.String(50), nullable=False)
     equipment_needed = db.Column(db.Boolean, default=False)
+
+    def get_workout_count(self):
+        """Get the number of workouts this exercise appears in"""
+        return WorkoutExercise.query.filter_by(exercise_id=self.id).count()
     
-    # Relationships
-    workout_exercises = db.relationship('WorkoutExercise', backref='exercise', cascade='all, delete-orphan')
+    def get_total_reps(self):
+        """Get total reps for this exercise across all workouts"""
+        result = db.session.query(db.func.sum(WorkoutExercise.reps)).filter(
+            WorkoutExercise.exercise_id == self.id,
+            WorkoutExercise.reps.isnot(None)
+        ).scalar()
+        return result or 0
+    
+    # Add explicit relationship to workouts through workout_exercises
+    workouts = db.relationship(
+        'Workout',
+        secondary='workout_exercises',
+        back_populates='exercises',
+        viewonly=True  # This is a read-only relationship since we have the join table
+    )
     
     # Validations
     @validates('name')
@@ -66,9 +83,33 @@ class Workout(BaseModel):
     date = db.Column(db.Date, nullable=False)
     duration_minutes = db.Column(db.Integer, nullable=False)
     notes = db.Column(db.Text)
+
+    def add_exercise(self, exercise, reps=None, sets=None, duration_seconds=None):
+        """Convenience method to add an exercise to this workout"""
+        workout_exercise = WorkoutExercise(
+            workout_id=self.id,
+            exercise_id=exercise.id,
+            reps=reps,
+            sets=sets,
+            duration_seconds=duration_seconds
+        )
+        db.session.add(workout_exercise)
+        return workout_exercise
     
-    # Relationships
-    workout_exercises = db.relationship('WorkoutExercise', backref='workout', cascade='all, delete-orphan')
+    def get_exercise_details(self, exercise_id):
+        """Get details for a specific exercise in this workout"""
+        return WorkoutExercise.query.filter_by(
+            workout_id=self.id, 
+            exercise_id=exercise_id
+        ).first()
+    
+    # Add explicit relationship to exercises through workout_exercises
+    exercises = db.relationship(
+        'Exercise',
+        secondary='workout_exercises',
+        back_populates='workouts',
+        viewonly=True  # This is a read-only relationship since we have the join table
+    )
     
     # Validations
     @validates('date')

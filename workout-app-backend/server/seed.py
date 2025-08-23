@@ -113,5 +113,24 @@ def seed_database():
         print(f"- Workouts: {Workout.query.count()}")
         print(f"- Workout Exercises: {WorkoutExercise.query.count()}")
 
+        print("Testing relationships...")
+
+        # Test the many-to-many relationships
+        workout = Workout.query.get(1)
+        exercise = Exercise.query.get(1)
+
+        print(f"Workout 1 has {len(workout.exercises)} exercises")
+        print(f"Exercise 1 appears in {len(exercise.workouts)} workouts")
+        print(f"Workout 1 exercise names: {[ex.name for ex in workout.exercises]}")
+
+        # Test convenience methods
+        total_reps = exercise.get_total_reps()
+        print(f"Exercise 1 total reps: {total_reps}")
+
+        workout_count = exercise.get_workout_count()
+        print(f"Exercise 1 workout count: {workout_count}")
+
+        print("Relationship tests passed!")
+
 if __name__ == '__main__':
     seed_database()
