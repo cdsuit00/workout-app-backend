@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
-from ..extensions import db
-from ..models import Workout, Exercise, WorkoutExercise
+from extensions import db  # Remove relative import
+from models import Workout, Exercise, WorkoutExercise  # Remove relative import
 
 workout_bp = Blueprint('workouts', __name__)
 
