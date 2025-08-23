@@ -18,10 +18,13 @@ def create_app():
     db.init_app(app)
     migrate.init_app(app, db)
     
-    # Import and register blueprints (will be added later)
-    # from .routes import workout_bp, user_bp, etc.
-    # app.register_blueprint(workout_bp)
-    # app.register_blueprint(user_bp)
+    # Import models to ensure they're registered with SQLAlchemy
+    # We'll import specific models as we create them
+    try:
+        from models import BaseModel
+        print("Models imported successfully")
+    except ImportError as e:
+        print(f"Model import error: {e}")
     
     return app
 

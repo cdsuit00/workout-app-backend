@@ -1,9 +1,9 @@
-from . import db
-from sqlalchemy.orm import validates
+from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
-import re
 
-# Base model class for common functionality
+# We'll get db from app.py to avoid circular imports
+db = SQLAlchemy()
+
 class BaseModel(db.Model):
     __abstract__ = True
     
@@ -18,17 +18,3 @@ class BaseModel(db.Model):
     def delete(self):
         db.session.delete(self)
         db.session.commit()
-    
-    @classmethod
-    def get_all(cls):
-        return cls.query.all()
-    
-    @classmethod
-    def get_by_id(cls, id):
-        return cls.query.get_or_404(id)
-
-# We'll define specific models in the next steps
-# class User(BaseModel):
-# class Workout(BaseModel):
-# class Exercise(BaseModel):
-# etc.
