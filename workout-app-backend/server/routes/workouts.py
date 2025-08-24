@@ -1,6 +1,8 @@
 from flask import Blueprint, request, jsonify
-from extensions import db  # Remove relative import
-from models import Workout, Exercise, WorkoutExercise  # Remove relative import
+from extensions import db
+from models import Workout, Exercise, WorkoutExercise
+from schemas.workout_schema import workout_schema, workouts_schema
+from schemas.workout_exercise_schema import workout_exercise_schema
 
 workout_bp = Blueprint('workouts', __name__)
 
@@ -9,8 +11,7 @@ workout_bp = Blueprint('workouts', __name__)
 def get_workouts():
     try:
         workouts = Workout.query.all()
-        # Will add serialization in next step
-        return jsonify([{"id": w.id, "date": w.date.isoformat()} for w in workouts]), 200
+        return workouts_schema.jsonify(workouts), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -19,8 +20,7 @@ def get_workouts():
 def get_workout(id):
     try:
         workout = Workout.query.get_or_404(id)
-        # Will add serialization in next step
-        return jsonify({"id": workout.id, "date": workout.date.isoformat()}), 200
+        return workout_schema.jsonify(workout), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 404
 
@@ -29,14 +29,12 @@ def get_workout(id):
 def create_workout():
     try:
         data = request.get_json()
-        workout = Workout(
-            date=data.get('date'),
-            duration_minutes=data.get('duration_minutes'),
-            notes=data.get('notes')
-        )
+        # Validate and deserialize input
+        workout_data = workout_schema.load(data)
+        workout = Workout(**workout_data)
         db.session.add(workout)
         db.session.commit()
-        return jsonify({"message": "Workout created", "id": workout.id}), 201
+        return workout_schema.jsonify(workout), 201
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 400
@@ -54,21 +52,19 @@ def delete_workout(id):
         return jsonify({"error": str(e)}), 400
 
 # POST /workouts/<workout_id>/exercises/<exercise_id>/workout_exercises
-# Add an exercise to a workout, including reps/sets/duration
 @workout_bp.route('/<int:workout_id>/exercises/<int:exercise_id>/workout_exercises', methods=['POST'])
 def add_exercise_to_workout(workout_id, exercise_id):
     try:
         data = request.get_json()
-        workout_exercise = WorkoutExercise(
-            workout_id=workout_id,
-            exercise_id=exercise_id,
-            reps=data.get('reps'),
-            sets=data.get('sets'),
-            duration_seconds=data.get('duration_seconds')
-        )
+        data['workout_id'] = workout_id
+        data['exercise_id'] = exercise_id
+        
+        # Validate and deserialize input
+        workout_exercise_data = workout_exercise_schema.load(data)
+        workout_exercise = WorkoutExercise(**workout_exercise_data)
         db.session.add(workout_exercise)
         db.session.commit()
-        return jsonify({"message": "Exercise added to workout", "id": workout_exercise.id}), 201
+        return workout_exercise_schema.jsonify(workout_exercise), 201
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 400
