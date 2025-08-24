@@ -1,5 +1,5 @@
 from flask import Flask, jsonify
-from extensions import db, migrate  # Remove the relative import dot
+from extensions import db, migrate
 
 def create_app():
     app = Flask(__name__)
@@ -14,12 +14,12 @@ def create_app():
     migrate.init_app(app, db)
     
     # Import models to ensure they're registered with SQLAlchemy
-    import models  # Remove relative import
+    import models
     print("Models imported successfully")
     
     # Register blueprints
-    from routes.workouts import workout_bp  # Remove relative import
-    from routes.exercises import exercise_bp  # Remove relative import
+    from routes.workouts import workout_bp
+    from routes.exercises import exercise_bp
     
     app.register_blueprint(workout_bp, url_prefix='/workouts')
     app.register_blueprint(exercise_bp, url_prefix='/exercises')
